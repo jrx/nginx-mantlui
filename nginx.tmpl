@@ -25,6 +25,11 @@ http {
         server {{.Address}}:{{.Port}};{{end}}
     } {{end}}
 
+    {{$dcos := service "dcos" "any"}}{{with $dcos}}
+    upstream dcos { {{range $dcos}}
+        server {{.Address}}:{{.Port}};{{end}}
+    } {{end}}
+
     {{$kubernetes_ui := service "nodeport" "any"}}{{with $kubernetes_ui}}
     upstream kubernetes_ui { {{range $kubernetes_ui}}
         server {{.Address}}:30000;{{end}}
@@ -145,6 +150,39 @@ http {
             proxy_set_header        x-forwarded-proto $scheme;
             proxy_pass http://marathon/;
         } {{end}}
+
+
+        # DC/OS internal paths
+        rewrite ^/dcos-metadata/(.*)$ /dcos/dcos-metadata/$1 redirect;
+        rewrite ^/metadata(.*)$ /dcos/metadata$1 redirect;
+        rewrite ^/dcos-history-service/(.*)$ /dcos/dcos-history-service/$1 redirect;
+        rewrite ^/system/health/(.*)$ /dcos/system/health/$1 redirect;
+
+        # DC/OS services
+        rewrite ^/service/marathon(.*)$ /marathon$1 redirect;
+        rewrite ^/service/(.*)$ /dcos/service/$1 redirect;
+
+
+        location /package/ {
+
+            proxy_set_header        host $host;
+            proxy_set_header        x-real-ip $remote_addr;
+            proxy_set_header        x-forwarded-for $proxy_add_x_forwarded_for;
+            #proxy_set_header        x-forwarded-proto $scheme;
+
+            proxy_pass http://master.mesos:8000/package/;
+        }
+
+        location /dcos/ {
+
+            proxy_set_header        host $host;
+            proxy_set_header        x-real-ip $remote_addr;
+            proxy_set_header        x-forwarded-for $proxy_add_x_forwarded_for;
+            #proxy_set_header        x-forwarded-proto $scheme;
+
+            #rewrite    /dcos/(.+)$ /$1 break;
+            proxy_pass http://master.mesos:8000/;
+        }
 
         {{with $kubernetes_ui}}
         location /kubernetes/ {
