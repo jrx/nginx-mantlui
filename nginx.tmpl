@@ -157,6 +157,9 @@ http {
         rewrite ^/metadata(.*)$ /dcos/metadata$1 redirect;
         rewrite ^/dcos-history-service/(.*)$ /dcos/dcos-history-service/$1 redirect;
         rewrite ^/system/health/(.*)$ /dcos/system/health/$1 redirect;
+        rewrite ^/acs/(.*)$ /dcos/acs/$1 redirect;
+        rewrite ^/pkgpanda/(.*)$ /dcos/pkgpanda/$1 redirect;
+        rewrite ^/slave/(.*)$ /dcos/slave/$1 redirect;
 
         # DC/OS services
         rewrite ^/service/marathon(.*)$ /marathon$1 redirect;
@@ -178,6 +181,10 @@ http {
             proxy_set_header        host $host;
             proxy_set_header        x-real-ip $remote_addr;
             proxy_set_header        x-forwarded-for $proxy_add_x_forwarded_for;
+            proxy_http_version 1.1;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection "upgrade";
+
             #proxy_set_header        x-forwarded-proto $scheme;
 
             #rewrite    /dcos/(.+)$ /$1 break;
